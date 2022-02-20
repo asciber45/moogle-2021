@@ -1,17 +1,20 @@
-﻿namespace MoogleEngine;
-
-
-public static class Moogle
+﻿namespace MoogleEngine
 {
-    public static SearchResult Query(string query) {
-        // Modifique este método para responder a la búsqueda
+    public class Moogle
+    {
+        public static Corpus? corpus;
+        /// <summary> Metodo que inicia el procesado de los documentos </summary> ///
+        public static void Start(string adress)
+        {
+            corpus = new Corpus(adress); // Inicializa el corpus
+            Similitud.ITF(corpus); // Halla el ITF de cada palabra
+            Similitud.Modulo(corpus); // Calclula el peso de cada palabra y el modulo de los documentos
+        } 
 
-        SearchItem[] items = new SearchItem[3] {
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.9f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.5f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.1f),
-        };
-
-        return new SearchResult(items, query);
-    }
+        /// <summary> Metodo que devuelve la busqueda deseada </summary> ///
+        public static SearchResult Query(string query) 
+        {
+            return new SearchResult(query, corpus!);
+        }
+    }   
 }
