@@ -16,15 +16,11 @@ namespace MoogleEngine
         ///<summary> Constructor que recibe la direccion del documento </summary>///
         public Info(string path, int i)
         {
-            words = new Dictionary<string, List<int>>();
             name = Name(path, i);      
         }
 
         /// <summary> Constructor que no necesita de una direccion </summary>///
-        public Info()
-        {
-            words = new Dictionary<string, List<int>>();
-        }
+        public Info(){}
 
         /// <summary> Devuelve ConstainsKey aplicado al diccionario words </summary>///
         public bool ContainsKey(string word)
@@ -66,16 +62,16 @@ namespace MoogleEngine
         } 
 
         ///<summary> Devuelve el modulo de un dcouemnto y calcula los pesos de cada palabra </summary>///
-        public void Modulo(Dictionary<string, float> itfs)
+        public void Modulo(Dictionary<string, float> idfs)
         {
-            int max = FindMax(itfs);
+            int max = FindMax(idfs);
             float sum = 0;
 
             foreach (var pair in words)
             {
                 if (pair.Key == "") continue;
                 float tf = (float)words[pair.Key].Count/max;
-                float itf = itfs[pair.Key];
+                float itf = idfs[pair.Key];
                 float weigth = tf*itf; // Calcula el peso de cada palabra
                 weigths.Add(pair.Key, weigth); // Guarda los pesos en el diccionario weigths
                 sum += (float)Math.Pow(weigth, 2);

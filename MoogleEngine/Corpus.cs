@@ -9,13 +9,16 @@ namespace MoogleEngine
     {
         public Dictionary<string, List<string>> roots = new Dictionary<string, List<string>>();
         public Dictionary<int, Info> documents = new Dictionary<int, Info>();
-        public Dictionary<string, float> ITFs = new Dictionary<string, float>();
+        public Dictionary<string, float> IDFs = new Dictionary<string, float>();
+        public Dictionary<string, List<string>> synonymus = new Dictionary<string, List<string>>();
         public string path = "";
         
-        ///<summary> Constructor que recibe la direccion donde estan los documentos <summary>//
+        ///<summary> Constructor que recibe la direccion donde estan los documentos </summary>///
         public Corpus(string path)
         {
             this.path = path;
+            string synjsonstring = File.ReadAllText("..//Synonymus\\synonymus.json");
+            synonymus = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(synjsonstring)!;
             int  numberofdocuments = Directory.GetFiles(path, "*.txt").Length;
             bool stemmdone = Directory.GetFiles("..//Cache").Contains("..//Cache\\stemming.json");
 
@@ -29,36 +32,37 @@ namespace MoogleEngine
             // Iteramos sobre los documentos procesandolos cada uno
             for (int i = 0; i < numberofdocuments; i++)
             {
-               ProcDoc(path, i, stemmdone);                                 
+               ProcDoc(i, stemmdone);                                 
             }
         }
         
         /// <summary> Metodo que procesa los docuementos </summary> ///
-        private void ProcDoc(string path, int i, bool stemmdone)
+        private void ProcDoc(int i, bool stemmdone)
         {
             Info info = new Info(path, i); // Inicializamos un objeto info para guardar todo lo necesario
             string text = File.ReadAllText(Directory.GetFiles(path, "*.txt")[i]).ToLower();
-            int count = 0; // Este contador sera un indice de las palabras en el documento
 
             if (text == null) return; // Revisamos si el documento esta vacio
-            string[] words = text.Split(' ');
+            string[] words = text.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             
             for (int j = 0; j < words.Length; j++)
             {
                 string word = words[j];
-                // Filtramos los signos de puntuacion y lineas vacias
-                if (word == "" || (word.Length == 1 && Char.IsPunctuation(word[0]))) 
+                // Filtramos los signos de puntuacion
+                if (word.Length == 1 && Char.IsPunctuation(word[0])) 
                 {
-                    count++;
                     continue;
                 }
 
-                if (char.IsPunctuation(word[word.Length-1])) word = word.Substring(0, word.Length-1);
+                while (word.Length >= 2 && (char.IsPunctuation(word[0]) || char.IsPunctuation(word[word.Length - 1])))
+                {
+                    if (char.IsPunctuation(word[word.Length - 1])) word = word.Substring(0, word.Length - 1);
+                    if (char.IsPunctuation(word[0])) word = word.Substring(1);
+                }
 
                 AddWord(word, info, stemmdone); // Guardamos los datos necesarios de cada palabra
 
-                info[word].Add(count);
-                count++;
+                info[word].Add(j);
             }
 
             documents.Add(i, info); // Agregamos el objeto info al diccionario documents
@@ -73,9 +77,9 @@ namespace MoogleEngine
             {
                 info.Add(word);
 
-                if (!ITFs.ContainsKey(word)) // Preguntamos si es una palabra nueva en el vocabulario
+                if (!IDFs.ContainsKey(word)) // Preguntamos si es una palabra nueva en el vocabulario
                 {
-                    ITFs.Add(word, 0);
+                    IDFs.Add(word, 0);
 
                     if (!stemmdone) // Aca solo entramos si el json de las raices no ha sido creado
                     {

@@ -23,7 +23,7 @@ namespace MoogleEngine
         }
 
         // Devuelve la distancia entre dos palabras en un documento
-        public static float Distance(int i, int j, bool a, bool b, Query query, Corpus corpus)
+        private static float Distance(int i, int j, bool a, bool b, Query query, Corpus corpus)
         {
             if (a && b)
             {
@@ -37,7 +37,7 @@ namespace MoogleEngine
         }
 
         // Devuelve cantidad minima de palabras entre dos palabras en un documento
-        public static int WordDistance(int i, int j, Query query, Corpus corpus)
+        private static int WordDistance(int i, int j, Query query, Corpus corpus)
         {
             List<int> a = corpus.documents[j][query.list[0][i]];
             List<int> b = corpus.documents[j][query.list[0][i+1]];
@@ -59,32 +59,38 @@ namespace MoogleEngine
         // Encontrar snippet
         public static string FindSnippet(int i, Query query, Corpus corpus, string path)
         {
-            int indexq = 0;
-            while (!corpus.documents[i].ContainsKey(query.list[0][indexq]) && !corpus.documents[i].ContainsKey(query.list[1][indexq])) indexq++;
-            int indexr = indexq;
-
-            for (int j = indexq; j < query.list[0].Count; j++)
-            {
-                if (corpus.documents[i].ContainsKey(query.list[0][indexq]) && corpus.documents[i].ContainsKey(query.list[0][j]))
-                    indexq = (corpus.documents[i].weigths[query.list[0][indexq]] > corpus.documents[i].weigths[query.list[0][j]])? indexq : j;
-                if (corpus.documents[i].ContainsKey(query.list[1][indexr]) && corpus.documents[i].ContainsKey(query.list[1][j]))
-                    indexr = (corpus.documents[i].weigths[query.list[1][indexr]] > corpus.documents[i].weigths[query.list[1][j]])? indexr : j;
-            }
-
-            string q = query.list[0][indexq];
-            string r = query.list[1][indexr];
-            string word = "";
-
-            if (corpus.documents[i].ContainsKey(q) && corpus.documents[i].ContainsKey(r))
-                word = Similitud.TotalWeight(q, corpus) < Similitud.TotalWeight(r, corpus)? r : q;
-            else if (corpus.documents[i].ContainsKey(q)) word = q;
-            else word = r;
+            string word = BestSnippet(query, corpus, i);
 
             return Take10Words(i, word, corpus, path);
         }
-        public static string Take10Words(int i, string word, Corpus corpus, string path)
+
+        // Entre palabras originales, raices y sinonimos selecciona la de mayor importancia en el documento
+        private static string BestSnippet(Query query, Corpus corpus, int k)
         {
-            string[] words = File.ReadAllText(Directory.GetFiles(path, "*.txt")[i]).Split(' ');
+            List<string>[] list = new List<string>[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                list[i] = new List<string>();
+                
+                for (int j = 0; j < query.list[i].Count; j++)
+                {
+                    if (!corpus.documents[k].ContainsKey(query.list[i][j])) continue;
+                    list[i].Add(query.list[i][j]);
+                }
+
+                list[i] = new List<string>{Similitud.BestWord(list[i], corpus)};
+            }
+
+            if (list[0][0] != "") return list[0][0];
+            else if (list[1][0] != "") return list[1][0];
+            else return list[2][0];
+        }
+
+        // Selccionada una palabra en un documento, toma una ocurrencia random y printea 5 palabras para cada lado
+        private static string Take10Words(int i, string word, Corpus corpus, string path)
+        {
+            string[] words = File.ReadAllText(Directory.GetFiles(path, "*.txt")[i]).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string snippet = "";
             int randomnumber = new Random().Next(0, corpus.documents[i][word].Count);
             int a = 0;
@@ -99,28 +105,6 @@ namespace MoogleEngine
             }
 
             return snippet;
-            // string snippet = File.ReadAllText(Directory.GetFiles(path, "*.txt")[i]).ToLower();
-            // int index = snippet.IndexOf(" " + word + " ");
-
-            // if (index > 20 && index < snippet.Length-30)
-            // {
-            //     snippet = snippet.Substring(index-20, 50);
-            //     return snippet;
-            // }
-            // if (index <= 20 && index < snippet.Length-40)
-            // {
-            //     snippet = snippet.Substring(0, index+50);
-            //     return snippet;
-            // }
-            // if (index > 20 && index >= snippet.Length-50)
-            // {
-            //     snippet = snippet.Substring(index-20);
-            //     return snippet;
-            // }
-            // else
-            // {
-            //     return snippet;
-            // } 
         }
 
         #endregion

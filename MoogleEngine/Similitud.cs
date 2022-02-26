@@ -8,9 +8,9 @@ namespace MoogleEngine
             similitud = Cosin(query, corpus);
         }
         // Calcular ITF de cada palabra
-        public static void ITF(Corpus corpus) 
+        public static void IDF(Corpus corpus) 
         {
-            foreach (var pair in corpus.ITFs)
+            foreach (var pair in corpus.IDFs)
             {
                 int count = 0;
 
@@ -22,7 +22,7 @@ namespace MoogleEngine
                     }
                 }
                 
-                corpus.ITFs[pair.Key] = (float)Math.Log((float)corpus.documents.Count/(count+1));
+                corpus.IDFs[pair.Key] = (float)Math.Log((float)corpus.documents.Count/(count+1));
             }
         }
         
@@ -31,11 +31,12 @@ namespace MoogleEngine
         {
             for (int i = 0; i < corpus.documents.Count; i++)
             {
-                corpus.documents[i].Modulo(corpus.ITFs);
+                corpus.documents[i].Modulo(corpus.IDFs);
             }
         }
 
-        public static List<int>[] SeparateWords(List<int>[] operators)
+        // Guarda los indices de las palabras asociadas a operasores de inclusion y exclusion
+        private static List<int>[] SeparateWords(List<int>[] operators)
         {
             List<int>[] a = new List<int>[2];
             a[0] = new List<int>();
@@ -62,7 +63,7 @@ namespace MoogleEngine
             return a;
         }
 
-        public static bool ContainsWord(Info info, List<int> index, List<string> words)
+        private static bool ContainsWord(Info info, List<int> index, List<string> words)
         {
             foreach (int number in index)
             {
@@ -75,34 +76,37 @@ namespace MoogleEngine
         }
 
         // Calculo de array similitud
-        public static float[,] Cosin(Query query, Corpus corpus)
+        private static float[,] Cosin(Query query, Corpus corpus)
         {
-            float[,] similitud = new float[2, corpus.documents.Count];
+            float[,] similitud = new float[3, corpus.documents.Count];
             List<int>[] separatewords = SeparateWords(query.operators);
             float mq = query.info[0].modulo;
             float mr = query.info[1].modulo;
+            float ms = query.info[2].modulo;
 
-            for (int i = 25; i < similitud.GetLength(1); i++)
+            for (int i = 0; i < similitud.GetLength(1); i++)
             {
                 if (ContainsWord(corpus.documents[i], separatewords[1], query.list[0])) continue;
                 if (separatewords[0].Count > 0 && !ContainsWord(corpus.documents[i], separatewords[0], query.list[0])) continue;
 
                 float prodvectq = VectorialProduct(query, corpus.documents, i, 0);
                 float prodvectr = VectorialProduct(query, corpus.documents, i, 1);
+                float prodvects = VectorialProduct(query, corpus.documents, i, 2);
                 float mi = corpus.documents[i].modulo;
                 if (mi == 0) continue;
                 if (mq != 0) similitud[0,i] = prodvectq / (mq * mi);
-                if (mr != 0) similitud[1,i] = prodvectr / (float)3*(mr * mi);
+                if (mr != 0) similitud[1,i] = prodvectr / (float)(2.0 * mr * mi);
+                if (ms != 0) similitud[2,i] = prodvects / (float)(6.0 * ms * mi);
             }
             return SortedDocuments(AuxMethods.Closeness(Prom(similitud), query, corpus));
         }
 
-        public static float[] Prom(float[,] array)
+        private static float[] Prom(float[,] array)
         {
             float[] newarray = new float[array.GetLength(1)];
             for (int i = 0; i < newarray.Length; i++)
             {
-                newarray[i] = array[0,i] + array[1,i];
+                newarray[i] = array[0,i] + array[1,i] + array[2,i];
             }
             return newarray;
         }
@@ -111,7 +115,7 @@ namespace MoogleEngine
         private static float VectorialProduct(Query query, Dictionary<int, Info> documents, int a, int j)
         {
             float prodvect = 0;
-            for (int i = 0; i < query.list[0].Count; i++)
+            for (int i = 0; i < query.list[j].Count; i++)
             {
                 if (!documents[a].weigths.ContainsKey(query.list[j][i])) continue;
                 prodvect += documents[a].weigths[query.list[j][i]]*query.info[j].weigths[query.list[j][i]];
@@ -120,7 +124,7 @@ namespace MoogleEngine
         }
 
         // Devuelve los documentos en orden de importancia
-        public static float[,] SortedDocuments(float[] score)
+        private static float[,] SortedDocuments(float[] score)
         {
             float[] originalscores = new float[score.Length];
             for (int i = 0; i < score.Length; i++)
@@ -156,7 +160,7 @@ namespace MoogleEngine
         }        
 
         // Indice de un elemento en un array
-        public static int Index(float[] array, float value)
+        private static int Index(float[] array, float value)
         {
             for (int i = 0; i < array.Length; i++)
             {
@@ -169,7 +173,7 @@ namespace MoogleEngine
         }
 
         // Une dos filas
-        public static float[,] MixArrays(float[] a1, int[] a2)
+        private static float[,] MixArrays(float[] a1, int[] a2)
         {
             float[,] mixarrays = new float[2, a1.Length];
 
@@ -195,7 +199,8 @@ namespace MoogleEngine
             return totalweight;
         }
 
-        public static string BestWord(List<string> list, string word, Corpus corpus)
+        // En una lista de palabras seleciiona la mejor relativa al cuerpo de docuementos
+        public static string BestWord(List<string> list, Corpus corpus)
         {
             if (list.Count == 0) return "";
 
@@ -203,6 +208,7 @@ namespace MoogleEngine
 
             for (int i = 0; i < list.Count; i++)
             {
+                if (!corpus.IDFs.ContainsKey(list[i])) continue;
                 bestword = TotalWeight(bestword, corpus) < TotalWeight(list[i], corpus)? list[i] : bestword;
             }
 

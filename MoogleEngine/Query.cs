@@ -7,23 +7,25 @@ namespace MoogleEngine
         // Queda guardada la posicion inicial de los operadores antes de ser eliminados
         public List<int>[] operators = new List<int>[2];
         // Dos listas, una con las palabras de la consulta, otras con palabras relacionadas por la misma raiz
-        public List<string>[] list = new List<string>[2];
+        public List<string>[] list = new List<string>[3];
         // Un objeto Info por cada una de las listas anteriores
-        public Info[] info = new Info[2];
+        public Info[] info = new Info[3];
 
         ///<summary> Constructor que recibe la consulta en forma de string y el corpus de docuementos </summary>///
         public Query(string query, Corpus corpus)
         {
             list[0] = new List<string>(); // Inicializa lista de palabras buscadas
             list[1] = new List<string>(); // Inicializa lista de raices buscadas
+            list[2] = new List<string>(); // Inicializa lista de sinonimos buscadas
             ProcQuery(query, corpus);
         }
 
         ///<summary> Metodo que analiza cada palabra de la consulta </summary>///
-        public void ProcQuery(string query, Corpus corpus)
+        private void ProcQuery(string query, Corpus corpus)
         {
             info[0] = new Info(); // Inicializa Info de las palabras de la consulta
             info[1] = new Info(); // Inicilaiza Info de las raices de las palabras
+            info[2] = new Info(); // Inicilaiza Info de las sinonimos de las palabras
             operators = Operators(query);
             List<string> words = query.Split(new char[] { ' ', '~', '!', '^' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -39,10 +41,10 @@ namespace MoogleEngine
                         word = word.Substring(1);
                         counter++;
                     }
-                    counter = Math.Pow(2, counter);
+                    counter = Math.Pow(Math.E, counter);
                 }
 
-                if (corpus.ITFs.ContainsKey(word) && corpus.ITFs[word] <= 0) // Exluye palabras nada relevantes
+                if (corpus.IDFs.ContainsKey(word) && corpus.IDFs[word] <= 0) // Exluye palabras nada relevantes
                 {
                     words.RemoveAt(i);
                     i--;
@@ -53,9 +55,11 @@ namespace MoogleEngine
 
                 AddRoot(word, corpus, i); // Guarda la raiz de la palabra
 
-                if (!corpus.ITFs.ContainsKey(word)) // Guarda las palabras nuevas con itf = 0
+                AddSynonymus(word, corpus, i); // Guarda el sinonimo de la palabra
+
+                if (!corpus.IDFs.ContainsKey(word)) // Guarda las palabras nuevas con idf = 0
                 {
-                    corpus.ITFs.Add(word, 0);
+                    corpus.IDFs.Add(word, 0);
                 }
 
                 while (counter >= 0)
@@ -64,8 +68,9 @@ namespace MoogleEngine
                     counter--;
                 }
             }
-            info[0].Modulo(corpus.ITFs);
-            info[1].Modulo(corpus.ITFs);
+            info[0].Modulo(corpus.IDFs);
+            info[1].Modulo(corpus.IDFs);
+            info[2].Modulo(corpus.IDFs);
         }
 
         private string AddSuggestion(string word, Corpus corpus)
@@ -89,7 +94,7 @@ namespace MoogleEngine
         {
             if (corpus.roots.ContainsKey(word.Stemmer()))
             {
-                string root = (operators[1][i] == 1) ? "" : Similitud.BestWord(corpus.roots[word.Stemmer()], word, corpus);
+                string root = (operators[1][i] == 1) ? "" : Similitud.BestWord(corpus.roots[word.Stemmer()], corpus);
 
                 if (!info[1].ContainsKey(word))
                 {
@@ -99,6 +104,22 @@ namespace MoogleEngine
                 list[1].Add(root);
             }
             else list[1].Add("");
+        }
+
+        private void AddSynonymus(string word, Corpus corpus, int i)
+        {
+            if (corpus.synonymus.ContainsKey(word))
+            {
+                string synonymus = (operators[1][i] == 1) ? "" : Similitud.BestWord(corpus.synonymus[word], corpus);
+
+                if (!info[2].ContainsKey(word))
+                {
+                    info[2].Add(synonymus);
+                }
+                info[2][synonymus].Add(1);
+                list[2].Add(synonymus);
+            }
+            else list[2].Add("");
         }
 
         ///<summary> Recibe la consulta y devuelve las posiciones de los operadores ~, ^, ! </summary>///
@@ -151,15 +172,19 @@ namespace MoogleEngine
         {
             string suggestion = "";
 
-            if (!corpus.ITFs.ContainsKey(word))
+            if (!corpus.IDFs.ContainsKey(word))
             {
-                foreach (var pair in corpus.ITFs)
+                for (int i = 1; i < word.Length / 3 + 1; i++)
                 {
-                    // if (LevenshteinDistance(word, pair.Key) <= word.Length/3)
-                    if (LevenshteinDistance(word, pair.Key) <= 1)
+                    foreach (var pair in corpus.IDFs)
                     {
-                        suggestion = Compare(suggestion, pair.Key, word, corpus);
+                        if (LevenshteinDistance(word, pair.Key) == i)
+                        {
+                            suggestion = Compare(suggestion, pair.Key, word, corpus);
+                        }
                     }
+                    
+                    if (suggestion != "") return suggestion;
                 }
             }
 

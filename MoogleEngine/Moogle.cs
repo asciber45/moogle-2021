@@ -7,7 +7,7 @@
         public static void Start(string adress)
         {
             corpus = new Corpus(adress); // Inicializa el corpus
-            Similitud.ITF(corpus); // Halla el ITF de cada palabra
+            Similitud.IDF(corpus); // Halla el ITF de cada palabra
             Similitud.Modulo(corpus); // Calclula el peso de cada palabra y el modulo de los documentos
         } 
 
