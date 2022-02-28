@@ -76,4 +76,4 @@ Se crea un objeto `Similitud` que recibe en su constructor un objeto `Query` y u
 
 * Para tener en cuenta las condiciones del operador de cercanía, se emplea la clase `AuxMethods` donde está el método `Closeness` que devuelve la mínima distancia entre una lista de índices de las palabras en un determinado documento.
 
-* Se construye el `Snippet` de cada uno de los documentos a devolver mediante el método `FindSnippet` de la clase `AuxMethods`. Se define un tamaño máximo de 10 palabras para la línea, luego entre las palabras del query que están en el documento, se selcciona la que más peso tenga y se devuelve una línea random en la que aparezca.
+* Se construye el `Snippet` de cada uno de los documentos a devolver mediante el método `FindSnippet` de la clase `AuxMethods`. Se define un tamaño máximo de 10 palabras para la línea, luego entre las palabras del query que están en el documento, se selcciona la que más peso tenga y se devuelve una línea random en la que aparezca. 
