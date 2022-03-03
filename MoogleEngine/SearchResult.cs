@@ -25,7 +25,7 @@ public class SearchResult
         Similitud scores = new Similitud(newquery, corpus);
         List<SearchItem> items = new List<SearchItem>();
 
-        for (int i = 0; scores.similitud![0, i] != 0; i++)
+        for (int i = 0; i < corpus.documents.Count && scores.similitud![0, i] != 0; i++)
         {
             string name = corpus.documents[(int)scores.similitud[1, i]].name;
             name = name.Substring(0, name.Length - 4);

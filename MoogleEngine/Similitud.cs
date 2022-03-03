@@ -22,7 +22,8 @@ namespace MoogleEngine
                     }
                 }
                 
-                corpus.IDFs[pair.Key] = (float)Math.Log((float)corpus.documents.Count/(count+1));
+                if (count == 0) return;
+                corpus.IDFs[pair.Key] = (float)Math.Log((float)corpus.documents.Count/(count));
             }
         }
         

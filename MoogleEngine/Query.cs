@@ -96,7 +96,7 @@ namespace MoogleEngine
             {
                 string root = (operators[1][i] == 1) ? "" : Similitud.BestWord(corpus.roots[word.Stemmer()], corpus);
 
-                if (!info[1].ContainsKey(word))
+                if (!info[1].ContainsKey(root))
                 {
                     info[1].Add(root);
                 }

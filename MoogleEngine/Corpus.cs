@@ -86,8 +86,7 @@ namespace MoogleEngine
                         string root = word.Stemmer();
                         if (!roots.ContainsKey(root)) // Preguntamos si ya tenemos esa raiz guardada
                         {
-                            List<string> newlist = new List<string>();
-                            roots.Add(root, newlist);
+                            roots.Add(root, new List<string>());
                             roots[root].Add(word);
                         }
                         else roots[root].Add(word);
