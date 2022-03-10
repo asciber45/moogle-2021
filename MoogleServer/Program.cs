@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
-MoogleEngine.Moogle.Start(@"..//Content");
+MoogleEngine.Moogle.Start();
 
 // Add services to the container.
 builder.Services.AddRazorPages();

@@ -7,36 +7,38 @@ namespace MoogleEngine
         {
             similitud = Cosin(query, corpus);
         }
-        // Calcular ITF de cada palabra
-        public static void IDF(Corpus corpus) 
+        // Calcular IDF de cada palabra
+        public static void IDF(Dictionary<int, Info> documents, Dictionary<string, float> IDFs) 
         {
-            foreach (var pair in corpus.IDFs)
+            foreach (var pair in IDFs)
             {
                 int count = 0;
 
-                for (int i = 0; i < corpus.documents.Count; i++)
+                for (int i = 0; i < documents.Count; i++)
                 {
-                    if (corpus.documents[i].ContainsKey(pair.Key))
+                    if (documents[i].ContainsKey(pair.Key))
                     {
                         count++;
                     }
                 }
                 
-                if (count == 0) return;
-                corpus.IDFs[pair.Key] = (float)Math.Log((float)corpus.documents.Count/(count));
+                if (count == 0) return; // Retorna si la palabara no está en ningún documento
+                IDFs[pair.Key] = (float)Math.Log((float)documents.Count/(count));
             }
+
+            Similitud.Modulo(documents, IDFs); // Calclula el peso de cada palabra y el modulo de los documentos
         }
         
         // Llama a clacular el modulo de cada documento
-        public static void Modulo(Corpus corpus)
+        public static void Modulo(Dictionary<int, Info> documents, Dictionary<string, float> IDFs)
         {
-            for (int i = 0; i < corpus.documents.Count; i++)
+            for (int i = 0; i < documents.Count; i++)
             {
-                corpus.documents[i].Modulo(corpus.IDFs);
+                documents[i].Modulo(IDFs);
             }
         }
 
-        // Guarda los indices de las palabras asociadas a operasores de inclusion y exclusion
+        // Guarda los indices de las palabras asociadas a operadores de inclusion y exclusion
         private static List<int>[] SeparateWords(List<int>[] operators)
         {
             List<int>[] a = new List<int>[2];
@@ -96,13 +98,14 @@ namespace MoogleEngine
                 float mi = corpus.documents[i].modulo;
                 if (mi == 0) continue;
                 if (mq != 0) similitud[0,i] = prodvectq / (mq * mi);
-                if (mr != 0) similitud[1,i] = prodvectr / (float)(2.0 * mr * mi);
-                if (ms != 0) similitud[2,i] = prodvects / (float)(6.0 * ms * mi);
+                if (mr != 0) similitud[1,i] = prodvectr / (float)(Math.E * mr * mi);
+                if (ms != 0) similitud[2,i] = prodvects / (float)(Math.Pow(Math.E, 2) * ms * mi);
             }
-            return SortedDocuments(AuxMethods.Closeness(Prom(similitud), query, corpus));
+            return SortedDocuments(AuxMethods.Closeness(Sum(similitud), query, corpus));
         }
 
-        private static float[] Prom(float[,] array)
+        // Suma todos los elementos de cada columna de un array bidimensional y devuelve una sola fila de elementos
+        private static float[] Sum(float[,] array)
         {
             float[] newarray = new float[array.GetLength(1)];
             for (int i = 0; i < newarray.Length; i++)
@@ -112,7 +115,7 @@ namespace MoogleEngine
             return newarray;
         }
 
-        // Producto vectorial
+        // Calcula el producto vectorial
         private static float VectorialProduct(Query query, Dictionary<int, Info> documents, int a, int j)
         {
             float prodvect = 0;
@@ -132,16 +135,19 @@ namespace MoogleEngine
             {
                 originalscores[i] = score[i];
             }
+
+            // Ordenar el array de scores
             Array.Sort(score);
             Array.Reverse(score);
 
+            // Este array deberá guardar las posiciones iniciales de los docuementos antes de ordenarlos
             int[] originalplaces = new int[score.Length];
-            int[] pased = new int[score.Length];
+            bool[] pased = new bool[score.Length];
 
             for (int i = 0; i < score.Length; i++)
             {
                 int k = Index(originalscores, score[i]);
-                while (pased[k] == 1)
+                while (pased[k])
                 {
                     float[] scorei = new float[score.Length-k-1];
 
@@ -154,7 +160,7 @@ namespace MoogleEngine
                 }   
 
                 originalplaces[i] = k;
-                pased[k] = 1;                                                                 
+                pased[k] = true;                                                                 
             }
 
             return MixArrays(score, originalplaces);

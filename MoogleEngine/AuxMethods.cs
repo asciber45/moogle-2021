@@ -27,12 +27,12 @@ namespace MoogleEngine
         {
             if (a && b)
             {
-                int c = WordDistance(i, j, query, corpus);
-                return c;
+                int distance = WordDistance(i, j, query, corpus);
+                return distance;
             }
             else
             {
-                return int.MaxValue; 
+                return corpus.documents[j].words.Count; 
             }
         }
 
@@ -72,19 +72,20 @@ namespace MoogleEngine
             for (int i = 0; i < 3; i++)
             {
                 list[i] = new List<string>();
-                
+                // Para un documento se guardan las listas de las palabras del query qu están en él
                 for (int j = 0; j < query.list[i].Count; j++)
                 {
                     if (!corpus.documents[k].ContainsKey(query.list[i][j])) continue;
                     list[i].Add(query.list[i][j]);
                 }
 
-                list[i] = new List<string>{Similitud.BestWord(list[i], corpus)};
+                // Nos quedamos con la palabra más relevante
+                list[i] = new List<string>{Similitud.BestWord(list[i], corpus)}; 
             }
 
-            if (list[0][0] != "") return list[0][0];
-            else if (list[1][0] != "") return list[1][0];
-            else return list[2][0];
+            if (list[0][0] != "") return list[0][0]; // Mejor palabra original
+            else if (list[1][0] != "") return list[1][0]; // Mejor raíz
+            else return list[2][0]; // Mejor sinónimo
         }
 
         // Selccionada una palabra en un documento, toma una ocurrencia random y printea 5 palabras para cada lado

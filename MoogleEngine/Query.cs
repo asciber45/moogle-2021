@@ -68,9 +68,11 @@ namespace MoogleEngine
                     counter--;
                 }
             }
-            info[0].Modulo(corpus.IDFs);
-            info[1].Modulo(corpus.IDFs);
-            info[2].Modulo(corpus.IDFs);
+
+            for (int i = 0; i < 3; i++)
+            {
+                info[i].Modulo(corpus.IDFs);
+            }
         }
 
         private string AddSuggestion(string word, Corpus corpus)
@@ -174,31 +176,36 @@ namespace MoogleEngine
 
             if (!corpus.IDFs.ContainsKey(word))
             {
-                for (int i = 1; i < word.Length / 3 + 1; i++)
+                Dictionary<int, List<string>> suggestions = new Dictionary<int, List<string>>();
+
+                foreach (var pair in corpus.IDFs)
                 {
-                    foreach (var pair in corpus.IDFs)
+                    int changes = LevenshteinDistance(word, pair.Key);
+
+                    if (changes <= word.Length / 3 && changes != 0)
                     {
-                        if (LevenshteinDistance(word, pair.Key) == i)
-                        {
-                            suggestion = Compare(suggestion, pair.Key, word, corpus);
-                        }
+                        if (!suggestions.ContainsKey(changes)) suggestions.Add(changes, new List<string>());
+
+                        suggestions[changes].Add(pair.Key);
                     }
-                    
-                    if (suggestion != "") return suggestion;
                 }
+
+                List<string> list = Compare(suggestions, word.Length / 3);
+                if (list != null) return Similitud.BestWord(list, corpus);
             }
 
             return suggestion;
         }
 
-        ///<summary> Entre dos palabras devuelve la mas relevante
-        private static string Compare(string suggestion, string newword, string word, Corpus corpus)
+        ///<summary> Entre el diccionario de sugerencias selecciona la lista de palabras con menor distancia
+        private static List<string> Compare(Dictionary<int, List<string>> suggestions, int distance)
         {
-            if (suggestion == "") suggestion = newword;
+            for (int i = 1; i < distance+1; i++)
+            {
+                if (suggestions.ContainsKey(i)) return suggestions[i];
+            }
 
-            if (Similitud.TotalWeight(suggestion, corpus) < Similitud.TotalWeight(newword, corpus)) suggestion = newword;
-
-            return suggestion;
+            return null!;
         }
 
         ///<summary> Devuelve la distancia minima entre dos palabras

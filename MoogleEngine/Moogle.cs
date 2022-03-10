@@ -4,11 +4,9 @@
     {
         public static Corpus? corpus;
         /// <summary> Metodo que inicia el procesado de los documentos </summary> ///
-        public static void Start(string adress)
+        public static void Start()
         {
-            corpus = new Corpus(adress); // Inicializa el corpus
-            Similitud.IDF(corpus); // Halla el ITF de cada palabra
-            Similitud.Modulo(corpus); // Calclula el peso de cada palabra y el modulo de los documentos
+            corpus = new Corpus(@"..//Content"); // Inicializa el corpus
         } 
 
         /// <summary> Metodo que devuelve la busqueda deseada </summary> ///
