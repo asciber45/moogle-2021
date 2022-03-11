@@ -106,6 +106,7 @@ namespace MoogleEngine
                     if (new FileInfo(name).Name != documents[i].name || File.GetLastWriteTime(name) != documents[i].lastmodification)
                     {
                         RemoveInfo(); // Eliminamos los datos guardados para rehacerlos
+                        documents = new Dictionary<int, Info>();
                         return false;
                     }
                 }

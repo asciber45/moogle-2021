@@ -114,7 +114,7 @@ namespace MoogleEngine
             {
                 string synonymus = (operators[1][i] == 1) ? "" : Similitud.BestWord(corpus.synonymus[word], corpus);
 
-                if (!info[2].ContainsKey(word))
+                if (!info[2].ContainsKey(synonymus))
                 {
                     info[2].Add(synonymus);
                 }

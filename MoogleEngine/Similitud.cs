@@ -98,8 +98,8 @@ namespace MoogleEngine
                 float mi = corpus.documents[i].modulo;
                 if (mi == 0) continue;
                 if (mq != 0) similitud[0,i] = prodvectq / (mq * mi);
-                if (mr != 0) similitud[1,i] = prodvectr / (float)(Math.E * mr * mi);
-                if (ms != 0) similitud[2,i] = prodvects / (float)(Math.Pow(Math.E, 2) * ms * mi);
+                if (mr != 0) similitud[1,i] = prodvectr / (float)(Math.Pow(Math.E, 3) * mr * mi);
+                if (ms != 0) similitud[2,i] = prodvects / (float)(Math.Pow(Math.E, 5) * ms * mi);
             }
             return SortedDocuments(AuxMethods.Closeness(Sum(similitud), query, corpus));
         }

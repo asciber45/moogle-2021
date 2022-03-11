@@ -67,7 +67,7 @@ namespace MoogleEngine
         /// <summary> Agrega elementos al diccionario words </summary>///
         public void Add(string word)
         {
-            if ( word.Length < 1) return;
+            // if ( word.Length < 1) return;
             List<int> newlist = new List<int>();
             words.Add(word, newlist);
         }
@@ -83,7 +83,7 @@ namespace MoogleEngine
         }
 
         ///<summary> Metodo que devuelve el numero de ocurrencias de la palabra mas comun del docuemento </summary>///
-        private int FindMax(Dictionary<string, float> itfs)
+        private int FindMax()
         {
             int max = 0;
             foreach (var word in words)
@@ -96,15 +96,15 @@ namespace MoogleEngine
         ///<summary> Devuelve el modulo de un dcouemnto y calcula los pesos de cada palabra </summary>///
         public void Modulo(Dictionary<string, float> idfs)
         {
-            int max = FindMax(idfs);
+            int max = FindMax();
             float sum = 0;
 
             foreach (var pair in words)
             {
                 if (pair.Key == "") continue;
                 float tf = (float)words[pair.Key].Count/max;
-                float itf = idfs[pair.Key];
-                float weigth = tf*itf; // Calcula el peso de cada palabra
+                float idf = idfs[pair.Key];
+                float weigth = tf*idf; // Calcula el peso de cada palabra
                 weigths.Add(pair.Key, weigth); // Guarda los pesos en el diccionario weigths
                 sum += (float)Math.Pow(weigth, 2);
             }
